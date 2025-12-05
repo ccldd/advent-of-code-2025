@@ -1,41 +1,21 @@
-using System.Diagnostics;
+using System.Text;
 
 const int NumDigits = 12;
 
 var banks = File.ReadAllLines(args[0]);
 
-void appendBuffer(List<int> buffer, int maxLength, int value)
+int findBestPairToRemove(StringBuilder buffer)
 {
-    buffer.Add(value);
-    if (buffer.Count <= maxLength)
+    var bestIndex = buffer.Length - 1;
+    for (int i = 1; i < buffer.Length; i++)
     {
-        return;
-    }
-
-    Debug.Assert(buffer.Count == maxLength + 1);
-
-    // Buffer is over by 1, need to remove one digit
-    var index = findBestPairToRemove(buffer);
-    buffer.RemoveAt(index);
-}
-
-int findBestPairToRemove(List<int> buffer)
-{
-    var bestIndex = -1;
-    for (int i = 1; i < buffer.Count; i++)
-    {
-        var left = buffer[i-1];
-        var right = buffer[i];
+        var left = buffer[i-1] - '0';
+        var right = buffer[i] - '0';
         if (left < right)
         {
             bestIndex = i-1;
             break;
         }
-    }
-
-    if (bestIndex == -1)
-    {
-        return buffer.Count - 1;
     }
 
     return bestIndex;
@@ -44,15 +24,14 @@ int findBestPairToRemove(List<int> buffer)
 long sum = 0;
 foreach (var bank in banks)
 {
-    var buffer = new List<int>(capacity: 12);
-
-    for (int i = 0; i < bank.Length; i++)
+    var buffer = new StringBuilder(bank);
+    while (buffer.Length > NumDigits)
     {
-        var currentDigit = (int)bank[i] - (int)'0';
-        appendBuffer(buffer, NumDigits, currentDigit);
+        var indexToRemove = findBestPairToRemove(buffer);
+        buffer.Remove(indexToRemove, 1);
     }
 
-    var numberStr = buffer.Aggregate("", (acc, digit) => acc + digit.ToString());
+    var numberStr = buffer.ToString();
     var number = long.Parse(numberStr);
     System.Console.WriteLine("{0} -> {1}", bank, number);
 

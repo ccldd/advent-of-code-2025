@@ -8,75 +8,36 @@ for (int y = 0; y < lines.Length; y++)
     }
 }
 
-var prints = 0;
-void printGrid(int timelineId, char[,] grid)
+// Location for S
+var sX = lines[0].IndexOf('S');
+Console.WriteLine(sX);
+var cache = new Dictionary<(int, int), long>();
+
+long solve(int x, int y)
 {
-    var p = Interlocked.Increment(ref prints);
-    Console.WriteLine($"TimelineId: {p}");
-    return;
-    for (int y = 0; y < lines.Length; y++)
-    {
-        for (int x = 0; x < lines[y].Length; x++)
-        {
-            Console.Write(grid[x, y]);
-        }
-        Console.WriteLine();
-        Console.WriteLine();
-    }
+  
+    if (y >= grid.GetLength(1))
+        return 1;
+    var c = grid[x, y];
+    if (c == '.' || c == 'S')
+        return cachingSolve(x, y + 1);
+    if (c == '^')
+        return cachingSolve(x - 1, y) + cachingSolve(x + 1, y);
+
+    throw new Exception();
 }
 
-var timelineId = 0;
-var tasks = new List<Task>();
-
-async Task f(char[,] grid, int startX, int startY)
+long cachingSolve(int x, int y)
 {
-    for (int y = startY; y < lines.Length; y++)
-    {
-        for (int x = startX; x < lines[y].Length; x++)
-        {
-            var c = lines[y][x];
-            if (c == 'S')
-            {
-                grid[x, y + 1] = '|';
-                break;
-            }
 
-            if (y >= 1 && grid[x, y - 1] == '|')
-            {
-                if (c == '^')
-                {
-                    var left = new char[grid.GetLength(0), grid.GetLength(1)];
-                    Array.Copy(grid, left, grid.Length);
-                    left[x - 1, y] = '|';
-                    tasks.Add(f(left, x - 1, y + 1));
+    if (cache.TryGetValue((x, y), out var v))
+        return v;
 
-                    var right = new char[grid.GetLength(0), grid.GetLength(1)];
-                    Array.Copy(grid, right, grid.Length);
-                    right[x + 1, y] = '|';
-                    tasks.Add(f(right, x + 1, y + 1));
-                    return;
-                }
-                else
-                {
-                    grid[x, y] = '|';
-                }
-            }
-        }
-    }
+    var z = solve(x, y);
+    cache[(x, y)] = z;
+    return z;
 
-    bool hasBeam = false;
-    for (int x = 0; x < grid.GetLength(0); x++)
-    {
-        if (grid[x, grid.GetLength(1) - 1] == '|')
-            hasBeam = true;
-    }
-
-    printGrid(timelineId, grid);
-
-    if (!hasBeam)
-        throw new Exception();
 }
 
-tasks.Add(f(grid, 0, 0));
-await Task.WhenAll(tasks);
-Console.WriteLine(prints);
+var c = cachingSolve(sX, 0);
+Console.WriteLine(c);

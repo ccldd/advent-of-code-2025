@@ -145,6 +145,29 @@ bool cachedIsValidPoint((int, int) p)
 bool isValidRect(((int, int), (int, int)) pairs)
 {
     Console.WriteLine("isValidRect");
+    var borderPoints = GetBorder(pairs);
+
+    int i = 0;
+    var res = Parallel.ForEach(
+        borderPoints,
+        (p, xs) =>
+        {
+            if (!cachedIsValidPoint(p))
+            {
+                xs.Stop();
+                return;
+            }
+
+            int ii = Interlocked.Increment(ref i);
+            Console.WriteLine($"finished={ii}/{borderPoints.Count}");
+        }
+    );
+
+    return res.IsCompleted;
+}
+
+List<(int, int)> GetBorder(((int, int), (int, int)) pairs)
+{
     var (a, b) = pairs;
     var (aX, aY) = a;
     var (bX, bY) = b;
@@ -157,33 +180,22 @@ bool isValidRect(((int, int), (int, int)) pairs)
     int maxY = Math.Max(aY, bY);
     int totalY = maxY - minY + 1;
 
-    for (int y = minY; y <= maxY; y++)
-    {
-        int finished = 0;
+    var topLeft = (minX, minY);
+    var topRight = (maxX, minY);
+    var bottomLeft = (minX, maxY);
+    var bottomRight = (maxX, maxY);
 
-        var res = Parallel.For(
-            minX,
-            maxX + 1,
-            (x, xs) =>
-            {
-                if (!cachedIsValidPoint((x, y)))
-                {
-                    xs.Stop();
-                    return;
-                }
-
-                int currentFinished = Interlocked.Increment(ref finished);
-                Console.WriteLine(
-                    $"y={y}/{totalY}, finished={currentFinished}/{totalX}"
-                );
-            }
-        );
-
-        if (!res.IsCompleted)
-            return false;
-    }
-
-    return true;
+    var topEdge = Enumerable.Range(minX + 1, totalX - 2).Select(x => (x, minY));
+    var bottomEdge = Enumerable.Range(minX + 1, totalX - 2).Select(x => (x, maxY));
+    var leftEdge = Enumerable.Range(minY + 1, totalY - 2).Select(y => (minX, y));
+    var rightEdge = Enumerable.Range(minY + 1, totalY - 2).Select(y => (maxX, y));
+    return new (int, int)[] { topLeft, topRight, bottomLeft, bottomRight }
+        .Concat(topEdge)
+        .Concat(leftEdge)
+        .Concat(rightEdge)
+        .Concat(bottomEdge)
+        .ToList();
+    //return new (int, int)[] { topLeft, topRight, bottomLeft, bottomRight }.ToList();
 }
 
 Console.WriteLine("Calculating areas");
@@ -194,6 +206,7 @@ var areas = pairs
 Console.WriteLine("Solved areas");
 isValidRect(((0, 0), (1, 1)));
 var rect = areas.First(kvp => isValidRect(kvp.Key));
+
 Console.WriteLine(rect.Key + " " + rect.Value);
 // foreach (var (k, v) in areas)
 // {

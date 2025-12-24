@@ -12,6 +12,9 @@ class Region:
     length: int
     quantities: List[int]
 
+    def area(self):
+        return width * length
+
 
 shapes: Dict[int, List[str]] = {}
 regions: List[Region] = []
@@ -36,3 +39,9 @@ while True:
         last_key = list(shapes.keys())[-1]
         shapes[last_key].append(line)
 
+fit = 0
+for region in regions:
+    if (region.width // 3) * (region.length // 3) >= sum(region.quantities):
+        fit += 1
+
+print(fit)

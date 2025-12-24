@@ -1,0 +1,5 @@
+Loaded 496 red tiles
+Created 588108 green tiles
+Initial bounds: X [1851, 98064], Y [1571, 98074]
+Added 100000 interior tiles, Total valid: 688604
+Out of memory.
